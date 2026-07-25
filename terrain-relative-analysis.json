@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0",
+  "coordinate_system": {
+    "unit": "km",
+    "origin": "south-west corner of the 8x8 map square",
+    "x_axis": "west to east",
+    "y_axis": "south to north"
+  },
+  "classification": {
+    "0": "lowland or water-adjacent basin",
+    "1": "low rolling terrain",
+    "2": "ridge or elevated terrain",
+    "3": "major summit or steep highland"
+  },
+  "route_cost": { "0": 1.0, "1": 1.08, "2": 1.28, "3": 1.55 },
+  "maps": {
+    "erangel": {
+      "size_km": 8,
+      "confidence": "medium",
+      "source_basis": "User-provided color relief map and contour/shaded-relief map; calibrated against coastline and named locations.",
+      "zones": [
+        { "id": "stalber", "level": 3, "kind": "highland", "polygon": [[5.8,6.4],[7.3,6.5],[7.8,7.8],[6.5,8.0],[5.8,7.4]] },
+        { "id": "north-ridge", "level": 2, "kind": "ridge", "polygon": [[3.7,6.3],[5.8,6.4],[6.4,7.6],[4.8,7.8],[3.7,7.1]] },
+        { "id": "west-highlands", "level": 2, "kind": "ridge", "polygon": [[0.3,3.0],[2.0,3.2],[2.5,5.1],[1.8,6.4],[0.6,5.6]] },
+        { "id": "southwest-ridge", "level": 2, "kind": "ridge", "polygon": [[0.7,1.1],[2.7,1.4],[3.0,3.0],[1.8,3.3],[0.8,2.5]] },
+        { "id": "mylta-hills", "level": 2, "kind": "ridge", "polygon": [[5.1,2.8],[7.3,3.0],[7.4,4.8],[6.3,5.2],[5.3,4.4]] },
+        { "id": "sosnovka-west-ridge", "level": 2, "kind": "ridge", "polygon": [[2.9,0.2],[4.5,0.2],[4.5,1.7],[3.6,2.0],[2.8,1.3]] },
+        { "id": "sosnovka-east-hill", "level": 2, "kind": "ridge", "polygon": [[5.3,0.5],[6.6,0.6],[6.8,1.8],[5.7,2.1],[5.1,1.4]] },
+        { "id": "rozok-river-basin", "level": 0, "kind": "lowland", "polygon": [[2.0,4.7],[4.9,4.6],[5.2,5.6],[3.9,5.9],[2.5,5.7]] },
+        { "id": "pochinki-plain", "level": 0, "kind": "lowland", "polygon": [[2.7,3.2],[5.1,3.2],[5.2,4.5],[3.2,4.7],[2.6,4.0]] },
+        { "id": "mylta-coast-basin", "level": 0, "kind": "lowland", "polygon": [[5.0,2.0],[7.8,2.2],[7.8,3.1],[6.0,3.0],[5.0,2.7]] }
+      ],
+      "low_corridors": [
+        { "id": "north-river", "points": [[1.7,5.2],[2.7,5.2],[3.8,5.3],[4.8,5.1]], "note": "Rozhok river basin; avoid climbing toward Stalber." },
+        { "id": "central-plain", "points": [[2.7,4.1],[3.7,4.0],[4.7,3.9],[5.3,3.5]], "note": "Pochinki-side lower terrain corridor." },
+        { "id": "south-coast", "points": [[4.7,2.4],[5.6,2.4],[6.7,2.5],[7.5,2.7]], "note": "Mylta coastal approach; keep clear of inland hills." }
+      ]
+    },
+    "miramar": {
+      "size_km": 8,
+      "confidence": "medium-low",
+      "source_basis": "User-provided colored contour map; calibrated against coastline and shared named locations. Treat as relative terrain, not current absolute elevation.",
+      "zones": [
+        { "id": "northwest-massif", "level": 3, "kind": "highland", "polygon": [[0.0,5.8],[2.4,5.8],[2.8,8.0],[0.0,8.0]] },
+        { "id": "oasis-highlands", "level": 2, "kind": "ridge", "polygon": [[2.7,6.6],[4.2,6.5],[4.1,8.0],[3.0,8.0]] },
+        { "id": "northeast-ridge", "level": 3, "kind": "highland", "polygon": [[6.1,5.7],[8.0,5.7],[8.0,8.0],[6.9,8.0]] },
+        { "id": "el-azahar-hills", "level": 2, "kind": "ridge", "polygon": [[5.7,4.5],[7.7,4.5],[7.8,6.2],[6.6,6.3]] },
+        { "id": "pecado-canterra-ridge", "level": 2, "kind": "ridge", "polygon": [[4.4,3.4],[6.5,3.3],[6.5,4.7],[5.2,4.9]] },
+        { "id": "west-southwest-ridge", "level": 2, "kind": "ridge", "polygon": [[0.0,1.3],[2.5,1.4],[2.7,4.9],[1.0,5.2],[0.0,4.1]] },
+        { "id": "el-pozo-basin", "level": 1, "kind": "rolling", "polygon": [[1.1,4.7],[3.5,4.8],[3.7,6.2],[1.5,6.4]] },
+        { "id": "central-desert", "level": 0, "kind": "lowland", "polygon": [[2.4,3.5],[5.2,3.5],[5.2,5.0],[3.0,5.1]] },
+        { "id": "los-leones-plain", "level": 0, "kind": "lowland", "polygon": [[3.4,1.7],[6.4,1.7],[6.5,3.6],[4.4,3.8]] },
+        { "id": "south-coast", "level": 0, "kind": "lowland", "polygon": [[2.0,0.0],[6.5,0.0],[6.6,1.7],[3.1,1.8]] }
+      ],
+      "low_corridors": [
+        { "id": "el-pozo-to-pecado", "points": [[2.0,5.0],[3.0,4.7],[4.1,4.5],[4.8,4.0]], "note": "Central basin route between the northwestern and northeastern massifs." },
+        { "id": "pecado-to-los-leones", "points": [[4.7,4.0],[4.8,3.3],[5.0,2.7],[5.1,2.2]], "note": "Prefer the central plain instead of the eastern ridgelines." },
+        { "id": "south-coast", "points": [[2.1,1.3],[3.5,1.2],[4.8,1.3],[6.1,1.4]], "note": "Lower coastal terrain; avoid the hills north of Puerto Paraiso." }
+      ]
+    }
+  },
+  "limitations": [
+    "Levels are relative only; they are not metres above sea level.",
+    "Use for route ranking and terrain warnings, not for a precise automatic-parachute altitude calculation.",
+    "Map updates or mismatched source versions can shift roads, compounds and local terrain."
+  ]
+}

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PUBG 상대 고도 분석</title>
+  <style>
+    :root{color-scheme:dark;--bg:#10151d;--panel:#18212e;--line:#324154;--text:#edf3fb;--muted:#acb7c7;--low:#51c982;--mid:#d1bd65;--high:#d77b49;--route:#63d7ff}
+    *{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at 10% 0,#1d3b42,transparent 35%),var(--bg);font-family:Inter,system-ui,"Malgun Gothic",sans-serif;color:var(--text)}
+    main{max-width:1140px;margin:auto;padding:32px 20px 48px} h1{font-size:clamp(25px,4vw,38px);letter-spacing:-.04em;margin:0} .lead{color:var(--muted);margin:8px 0 24px}
+    .toolbar{display:flex;gap:12px;align-items:end;margin-bottom:16px}.toolbar label{font-size:12px;color:var(--muted);display:grid;gap:5px}.toolbar select{min-width:190px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:#0f151e;color:var(--text);font:inherit}
+    .layout{display:grid;grid-template-columns:minmax(0,1fr) 285px;gap:20px}.map-wrap{position:relative;aspect-ratio:1;overflow:hidden;border:1px solid var(--line);border-radius:14px;background:#07131c}.map-wrap>img,.map-wrap>svg{position:absolute;width:100%;height:100%;inset:0}.map-wrap>img{object-fit:cover}.map-wrap>svg{pointer-events:none}
+    .side{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:17px}.side h2{margin:0 0 13px;font-size:16px}.item{display:flex;gap:9px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}.item:last-child{border:0}.swatch{width:12px;height:12px;border-radius:50%;flex:none;margin-top:3px}.item strong{font-size:13px;display:block}.item span{font-size:12px;color:var(--muted);line-height:1.45}.note{font-size:12px;line-height:1.6;color:var(--muted);margin:18px 0 0}.zone-label{font:600 13px system-ui;fill:#fff;paint-order:stroke;stroke:rgba(0,0,0,.75);stroke-width:3px;stroke-linejoin:round}.corridor-label{font:600 12px system-ui;fill:#dff8ff;paint-order:stroke;stroke:rgba(0,0,0,.75);stroke-width:3px}
+    .meta{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;color:var(--muted);font-size:13px;line-height:1.55}.meta strong{color:var(--text)}
+    @media(max-width:760px){.layout{grid-template-columns:1fr}.side{order:2}.toolbar{align-items:stretch}.toolbar label{width:100%}.toolbar select{width:100%}}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>PUBG 상대 고도 분석</h1>
+    <p class="lead">등고선·색상 고도 자료를 8×8 km 좌표계에 맞춘 분석 레이어입니다.</p>
+    <div class="toolbar"><label>맵 선택<select id="mapSelect"><option value="erangel">에란겔</option><option value="miramar">미라마</option></select></label></div>
+    <section class="layout">
+      <div class="map-wrap" aria-label="상대 고도 분석 지도"><img id="mapImage" alt="선택된 PUBG 지도"><svg id="overlay" viewBox="0 0 800 800" role="img" aria-label="상대 고도 구역과 저지대 통로"></svg></div>
+      <aside class="side"><h2>상대 고도</h2><div class="item"><i class="swatch" style="background:var(--low)"></i><div><strong>저지대 · 등급 0</strong><span>강, 해안, 분지 인접 지역. 우선 경유 후보</span></div></div><div class="item"><i class="swatch" style="background:var(--mid)"></i><div><strong>능선 · 등급 2</strong><span>자동 전개에 불리할 수 있어 우회 권장</span></div></div><div class="item"><i class="swatch" style="background:var(--high)"></i><div><strong>주요 고지대 · 등급 3</strong><span>급경사 또는 큰 산지. 강한 우회 권장</span></div></div><p class="note" id="confidence"></p></aside>
+    </section>
+    <section class="meta"><strong>해석 주의:</strong> 이 자료는 절대 고도(m)가 아닌 상대 고도입니다. 경로 우선순위·능선 회피에는 쓸 수 있지만, 자동 낙하산 전개 시점을 정확한 초 단위로 예측하려면 원본 Heightmap이 필요합니다.</section>
+  </main>
+  <script>
+    const maps={
+      erangel:{image:'erangel.png',confidence:'신뢰도: 중간 — 기본 지도·색상 고도·등고선 자료를 함께 사용했습니다.',zones:[
+        ['Stalber',3,[[5.8,6.4],[7.3,6.5],[7.8,7.8],[6.5,8],[5.8,7.4]]],['북부 능선',2,[[3.7,6.3],[5.8,6.4],[6.4,7.6],[4.8,7.8],[3.7,7.1]]],['서부 고지대',2,[[.3,3],[2,3.2],[2.5,5.1],[1.8,6.4],[.6,5.6]]],['남서 능선',2,[[.7,1.1],[2.7,1.4],[3,3],[1.8,3.3],[.8,2.5]]],['Mylta Hills',2,[[5.1,2.8],[7.3,3],[7.4,4.8],[6.3,5.2],[5.3,4.4]]],['Rozhok 강 분지',0,[[2,4.7],[4.9,4.6],[5.2,5.6],[3.9,5.9],[2.5,5.7]]],['Pochinki 평야',0,[[2.7,3.2],[5.1,3.2],[5.2,4.5],[3.2,4.7],[2.6,4]]],['Mylta 해안 분지',0,[[5,2],[7.8,2.2],[7.8,3.1],[6,3],[5,2.7]]]
+      ],corridors:[['북부 강 통로',[[1.7,5.2],[2.7,5.2],[3.8,5.3],[4.8,5.1]]],['중앙 평야 통로',[[2.7,4.1],[3.7,4],[4.7,3.9],[5.3,3.5]]],['남부 해안 통로',[[4.7,2.4],[5.6,2.4],[6.7,2.5],[7.5,2.7]]]]},
+      miramar:{image:'miramar.png',confidence:'신뢰도: 중하 — 제공된 등고선 지도를 현행 기본 지도와 해안선·지명으로 보정했습니다.',zones:[
+        ['북서 산악지',3,[[0,5.8],[2.4,5.8],[2.8,8],[0,8]]],['Oasis 고지대',2,[[2.7,6.6],[4.2,6.5],[4.1,8],[3,8]]],['북동 능선',3,[[6.1,5.7],[8,5.7],[8,8],[6.9,8]]],['El Azahar 언덕',2,[[5.7,4.5],[7.7,4.5],[7.8,6.2],[6.6,6.3]]],['Pecado–Cantera 능선',2,[[4.4,3.4],[6.5,3.3],[6.5,4.7],[5.2,4.9]]],['서남 능선',2,[[0,1.3],[2.5,1.4],[2.7,4.9],[1,5.2],[0,4.1]]],['El Pozo 분지',0,[[1.1,4.7],[3.5,4.8],[3.7,6.2],[1.5,6.4]]],['중앙 사막 평야',0,[[2.4,3.5],[5.2,3.5],[5.2,5],[3,5.1]]],['Los Leones 평야',0,[[3.4,1.7],[6.4,1.7],[6.5,3.6],[4.4,3.8]]],['남부 해안',0,[[2,0],[6.5,0],[6.6,1.7],[3.1,1.8]]]
+      ],corridors:[['El Pozo → Pecado',[[2,5],[3,4.7],[4.1,4.5],[4.8,4]]],['Pecado → Los Leones',[[4.7,4],[4.8,3.3],[5,2.7],[5.1,2.2]]],['남부 해안 통로',[[2.1,1.3],[3.5,1.2],[4.8,1.3],[6.1,1.4]]]]}
+    };
+    const colors={0:'#51c982',1:'#a9c968',2:'#d1bd65',3:'#d77b49'};
+    const svg=document.getElementById('overlay'),select=document.getElementById('mapSelect'),image=document.getElementById('mapImage'),confidence=document.getElementById('confidence');
+    const point=([x,y])=>`${x*100},${800-y*100}`;
+    function center(points){const x=points.reduce((s,p)=>s+p[0],0)/points.length,y=points.reduce((s,p)=>s+p[1],0)/points.length;return point([x,y])}
+    function render(){const map=maps[select.value];image.src=map.image;image.alt=`${select.options[select.selectedIndex].text} 기본 지도`;confidence.textContent=map.confidence;svg.innerHTML='';map.zones.forEach(([name,level,points])=>{const polygon=document.createElementNS('http://www.w3.org/2000/svg','polygon');polygon.setAttribute('points',points.map(point).join(' '));polygon.setAttribute('fill',colors[level]);polygon.setAttribute('fill-opacity','.30');polygon.setAttribute('stroke',colors[level]);polygon.setAttribute('stroke-width','3');svg.append(polygon);if(level>1){const label=document.createElementNS('http://www.w3.org/2000/svg','text');label.setAttribute('x',center(points).split(',')[0]);label.setAttribute('y',Number(center(points).split(',')[1])+4);label.setAttribute('text-anchor','middle');label.setAttribute('class','zone-label');label.textContent=name;svg.append(label)}});map.corridors.forEach(([name,points])=>{const line=document.createElementNS('http://www.w3.org/2000/svg','polyline');line.setAttribute('points',points.map(point).join(' '));line.setAttribute('fill','none');line.setAttribute('stroke','#63d7ff');line.setAttribute('stroke-width','7');line.setAttribute('stroke-linecap','round');line.setAttribute('stroke-linejoin','round');line.setAttribute('stroke-opacity','.9');svg.append(line);const text=document.createElementNS('http://www.w3.org/2000/svg','text'),last=points.at(-1),p=point(last).split(',');text.setAttribute('x',Number(p[0])+8);text.setAttribute('y',Number(p[1])-8);text.setAttribute('class','corridor-label');text.textContent=name;svg.append(text)})}
+    select.addEventListener('change',render);render();
+  </script>
+</body>
+</html>
