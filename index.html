@@ -4,78 +4,311 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>PUBG 낙하산 최적화</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <style>
-    :root{color-scheme:dark;--bg:#10151d;--panel:#17212d;--line:#344358;--text:#edf3fb;--muted:#aab8c9;--accent:#50dbad;--orange:#ffb44b;--red:#ff7272}
-    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0,#1b3942,transparent 34%),var(--bg);font-family:Inter,system-ui,"Malgun Gothic",sans-serif;color:var(--text)}main{max-width:1160px;margin:auto;padding:32px 20px 48px}h1{margin:0;font-size:clamp(27px,4vw,40px);letter-spacing:-.04em}.lead{margin:9px 0 24px;color:var(--muted)}.layout{display:grid;grid-template-columns:310px minmax(0,1fr);gap:20px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:17px}h2{font-size:15px;margin:0 0 11px}.field{display:block;font-size:12px;color:var(--muted);margin:12px 0}.field input,.field select{display:block;width:100%;padding:9px 10px;margin-top:5px;color:var(--text);background:#101722;border:1px solid var(--line);border-radius:8px;font:inherit}.coords{display:grid;grid-template-columns:1fr 1fr;gap:9px}.rule{border:0;border-top:1px solid var(--line);margin:17px 0}.toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);cursor:pointer}.hint{font-size:12px;line-height:1.55;color:var(--muted);margin:12px 0 0}.map-panel{padding:0;overflow:hidden;position:relative}.map-panel canvas{display:block;width:100%;height:auto;aspect-ratio:1;cursor:crosshair;background:#07141f}.map-hint{position:absolute;bottom:13px;left:13px;background:#0d141ddd;color:var(--muted);padding:7px 9px;border-radius:7px;font-size:12px}.results{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.metric{background:#202c3b;border-radius:12px;padding:14px}.metric span{font-size:12px;color:var(--muted);display:block}.metric strong{display:block;margin-top:6px;font-size:21px;letter-spacing:-.04em}.explain{grid-column:1/-1;margin:1px 0;color:var(--muted);line-height:1.55;font-size:13px}.notice{color:#ffd08c;font-size:12px;min-height:18px;margin-top:12px}@media(max-width:760px){.layout{grid-template-columns:1fr}.map-panel{grid-row:1}.results{grid-template-columns:1fr 1fr}}@media(max-width:420px){.results{grid-template-columns:1fr}}
-    /* iOS 27-inspired Liquid Glass refinement */
-    :root{--bg:#07111f;--panel:rgba(17,31,51,.56);--line:rgba(181,215,255,.24);--text:#edf5ff;--muted:#adbed4;--accent:#4aa7ff;--orange:#ffac50;--red:#ff7181}
-    body{min-height:100vh;background:radial-gradient(circle at 14% 5%,rgba(27,139,209,.36),transparent 28%),radial-gradient(circle at 92% 22%,rgba(102,73,202,.29),transparent 29%),radial-gradient(circle at 55% 100%,rgba(22,152,112,.20),transparent 34%),linear-gradient(145deg,#07111f 0%,#0c1930 49%,#101b31 100%)}
-    body::before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.12),transparent 24% 68%,rgba(172,207,255,.06));z-index:-1}
-    main{padding-top:44px}h1{font-weight:720;color:#f2f7ff;text-shadow:0 1px 0 rgba(255,255,255,.16)}.lead{color:#adbed4}
-    .panel{background:linear-gradient(135deg,rgba(19,35,57,.82),rgba(10,21,39,.70));border:1px solid rgba(174,207,248,.22);box-shadow:0 18px 46px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.15);backdrop-filter:blur(24px) saturate(135%);-webkit-backdrop-filter:blur(24px) saturate(135%)}
-    .field{color:#b4c3d7;font-weight:550}.field input,.field select{appearance:none;background:rgba(3,11,23,.78);border:1px solid rgba(158,193,235,.18);box-shadow:inset 0 1px 1px rgba(0,0,0,.38),0 3px 12px rgba(0,0,0,.18);color:#f0f6ff;border-radius:12px}.field input:focus,.field select:focus{outline:3px solid rgba(74,167,255,.25);border-color:rgba(74,167,255,.75)}
-    #mapSelect,#mode{background:#07101d;border-color:rgba(126,166,214,.16)}#mapSelect option,#mode option{background:#07101d;color:#f0f6ff}
-    .toggle{display:none}.toggle input{width:17px;height:17px;accent-color:#4aa7ff}.hint{color:#adbed4}.rule{border-color:rgba(180,208,245,.16)}
-    .map-panel{background:rgba(6,16,31,.36)}.map-panel canvas{border-radius:14px;background:#07121f}.map-hint{background:rgba(9,22,40,.72);border:1px solid rgba(203,227,255,.28);box-shadow:0 5px 20px rgba(0,0,0,.28);backdrop-filter:blur(16px);color:#cedcf0}
-    .secret-toggle{position:absolute;right:13px;bottom:13px;z-index:2;border:1px solid rgba(203,227,255,.32);border-radius:999px;padding:9px 13px;background:rgba(9,22,40,.78);box-shadow:0 5px 20px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.12);backdrop-filter:blur(16px);color:#eaf3ff;font:600 12px Inter,system-ui,"Malgun Gothic",sans-serif;cursor:pointer}.secret-toggle:hover{background:rgba(30,58,91,.86)}.secret-toggle[aria-pressed="true"]{background:rgba(192,42,65,.85);border-color:rgba(255,195,205,.72)}.secret-toggle:disabled{opacity:.42;cursor:not-allowed}
-    .metric{background:linear-gradient(135deg,rgba(255,255,255,.14),rgba(105,158,222,.08));border:1px solid rgba(216,233,255,.26);box-shadow:0 10px 28px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.18);backdrop-filter:blur(18px)}.metric span,.explain{color:#adbed4}.metric strong{color:#f3f8ff}.notice{color:#ffc27b}
-    @media(max-width:760px){main{padding:24px 14px 38px}.panel{border-radius:20px}.map-panel canvas{border-radius:20px}}
+    :root{
+      color-scheme:dark;
+      --bg:#0a0c0b;--surface:#121513;--surface-2:#191d1a;--surface-3:#232823;
+      --line:#262c28;--line-2:#343c36;
+      --text:#eceee9;--muted:#9ba39d;--dim:#6f7771;
+      --accent:#f5b02e;--accent-soft:rgba(245,176,46,.13);--accent-ink:#1b1304;
+      --warn:#ffb867;--bad:#ff6a5f;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:radial-gradient(1200px 600px at 75% -10%,rgba(245,176,46,.07),transparent 60%),var(--bg);color:var(--text);font:15px/1.5 "Pretendard Variable",Pretendard,system-ui,"Malgun Gothic",sans-serif;-webkit-font-smoothing:antialiased}
+    button,input{font:inherit;color:inherit}
+    :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    /* 넓은 화면에서 지도가 화면 높이 안에 들어오도록 전체 폭을 제한 */
+    .app{max-width:min(1280px,calc(100vh + 300px));margin:0 auto;padding:22px 20px 40px}
+
+    .top{display:flex;align-items:flex-end;justify-content:space-between;gap:14px 20px;flex-wrap:wrap;margin-bottom:16px}
+    .brand h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.025em}
+    .brand p{margin:3px 0 0;font-size:13px;color:var(--muted)}
+
+    .seg{display:inline-flex;gap:2px;padding:3px;background:var(--surface);border:1px solid var(--line);border-radius:11px}
+    .seg button{appearance:none;border:0;background:none;padding:7px 13px;border-radius:8px;color:var(--muted);font-size:13px;font-weight:650;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
+    .seg button:hover{color:var(--text)}
+    .seg button[aria-pressed="true"]{background:var(--surface-3);color:var(--text);box-shadow:inset 0 0 0 1px var(--line-2)}
+    .seg.maps button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+    .seg.full{display:flex}.seg.full button{flex:1}
+
+    .layout{display:grid;grid-template-columns:minmax(0,1fr) 344px;gap:16px;align-items:start}
+
+    .map{position:relative;aspect-ratio:1;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#070908}
+    .map canvas{display:block;width:100%;height:100%;cursor:crosshair}
+    .map canvas.drawing{touch-action:none}
+    .float{position:absolute;z-index:2;background:rgba(10,12,11,.78);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+    .map .tools{top:12px;left:12px}
+    .map .hint{left:12px;bottom:12px;padding:6px 10px;border-radius:8px;font-size:12px;color:var(--muted);pointer-events:none}
+    .secret{right:12px;bottom:12px;padding:7px 12px;border-radius:999px;font-size:12px;font-weight:650;cursor:pointer}
+    .secret:hover:not(:disabled){border-color:rgba(255,255,255,.25)}
+    .secret[aria-pressed="true"]{background:rgba(190,36,62,.88);border-color:rgba(255,190,200,.6)}
+    .secret:disabled{opacity:.45;cursor:not-allowed}
+
+    .side{display:grid;gap:12px}
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+    .card h2{margin:0 0 10px;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.03em}
+
+    .result .label{font-size:12px;font-weight:650;color:var(--muted)}
+    .result .big{margin-top:2px;font-size:42px;font-weight:800;letter-spacing:-.035em;line-height:1.1;font-variant-numeric:tabular-nums}
+    .result .big.off{color:var(--warn)}
+    .result .sub{margin-top:4px;font-size:12.5px;color:var(--dim)}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:14px}
+    .stat{padding:9px 10px;background:var(--surface-2);border-radius:10px}
+    .stat span{display:block;font-size:11px;color:var(--muted)}
+    .stat strong{display:block;margin-top:1px;font-size:16px;font-weight:750;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+    .notice{margin:12px 0 0;padding:9px 11px;border-radius:9px;background:rgba(255,184,103,.09);color:var(--warn);font-size:12.5px;line-height:1.5}
+    .notice:empty{display:none}
+    .explain{margin:12px 0 0;font-size:13px;line-height:1.6;color:var(--muted)}
+
+    .radii{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+    .radii button{appearance:none;display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 0 7px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;font-size:14px;font-weight:750;font-variant-numeric:tabular-nums;cursor:pointer;transition:border-color .15s,background .15s}
+    .radii button small{font-size:10.5px;font-weight:600;color:var(--dim)}
+    .radii button:hover{border-color:var(--line-2)}
+    .radii button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+    .radii button[aria-pressed="true"] small{color:var(--accent)}
+    .formula{margin:10px 0 0;font-size:12px;line-height:1.55;color:var(--dim)}
+
+    details summary{display:flex;justify-content:space-between;align-items:center;cursor:pointer;list-style:none;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.03em}
+    details summary::-webkit-details-marker{display:none}
+    details summary::after{content:"";width:7px;height:7px;border-right:2px solid var(--dim);border-bottom:2px solid var(--dim);transform:rotate(45deg);transition:transform .15s;margin-right:3px}
+    details[open] summary::after{transform:rotate(-135deg)}
+    .coords{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px 8px;align-items:center;margin-top:12px}
+    .coords .head{font-size:11px;color:var(--dim);text-align:center}
+    .coords .row{font-size:12.5px;color:var(--muted);font-weight:600;padding-right:4px}
+    .coords input{width:100%;min-width:0;padding:7px 9px;background:var(--bg);border:1px solid var(--line);border-radius:8px;font-size:13px;font-variant-numeric:tabular-nums}
+    .coords input:focus{border-color:var(--accent);outline:none}
+    .coords input[aria-invalid="true"]{border-color:var(--bad);background:rgba(255,106,95,.07)}
+
+    .foot{margin:18px 2px 0;font-size:12px;line-height:1.6;color:var(--dim)}
+
+    @media(max-width:920px){.layout{grid-template-columns:1fr}}
+    @media(max-width:520px){
+      .app{padding:14px 14px 32px}
+      .top{align-items:stretch}.seg.maps{display:flex;width:100%}.seg.maps button{flex:1;padding:7px 4px}
+      .result .big{font-size:36px}
+      .map{border-radius:12px}
+    }
   </style>
 </head>
-<body><main>
-  <h1>낙하산 최적화 계산기</h1><p class="lead">왼쪽 클릭으로 목표를, 오른쪽 버튼 드래그로 비행기 항로를 지정하세요.</p>
-  <section class="layout">
-    <aside class="panel"><h2>맵 선택</h2><label class="field">맵<select id="mapSelect"><option value="erangel">에란겔 · 8×8 km</option><option value="miramar">미라마 · 8×8 km</option><option value="taego">태이고 · 8×8 km</option><option value="rondo">론도 · 8×8 km</option><option value="sanhok">사녹 · 4×4 km</option></select></label><label class="field">계산 방식<select id="mode"><option value="fixed">기본 고정 공식</option><option value="terrain">상대 고도 보정</option></select></label><label class="toggle"><input id="terrain" type="checkbox"> 상대 고도 분석 레이어</label><p class="hint" id="terrainHint">기본 고정 공식은 거리만 사용합니다. 상대 고도 보정은 능선·저지대 자료를 함께 사용합니다.</p><hr class="rule"><h2>비행기 항로 (km)</h2><div class="coords"><label class="field">시작 X<input id="sx" type="number" value="0" step=".1"></label><label class="field">시작 Y<input id="sy" type="number" value="1.2" step=".1"></label><label class="field">종료 X<input id="ex" type="number" value="8" step=".1"></label><label class="field">종료 Y<input id="ey" type="number" value="6.4" step=".1"></label></div><hr class="rule"><h2>목표 지점 (km)</h2><div class="coords"><label class="field">목표 X<input id="tx" type="number" value="5.8" step=".1"></label><label class="field">목표 Y<input id="ty" type="number" value="3.7" step=".1"></label></div><p class="hint">고정 공식: 4×4는 1.2km 전 / 165km/h, 8×8은 700m 전 / 200km/h, 두 경우 모두 100m 수직 하강.</p><p class="notice" id="notice"></p></aside>
-    <section class="panel map-panel"><canvas id="map" width="800" height="800" aria-label="PUBG 지도와 낙하 경로"></canvas><div class="map-hint">왼쪽 클릭: 목표 지점 · 오른쪽 드래그: 비행기 항로</div></section>
-    <section class="results"><div class="metric"><span>낙하 시점</span><strong id="drop">—</strong></div><div class="metric"><span>유지 속도</span><strong id="speed">—</strong></div><div class="metric"><span>수직 하강 시작</span><strong id="vertical">—</strong></div><div class="metric"><span>현재 항로상 거리</span><strong id="distance">—</strong></div><p class="explain" id="explain">항로와 목표를 지정해 주세요.</p></section>
-  </section>
-</main><script>
-const $=id=>document.getElementById(id),canvas=$('map'),ctx=canvas.getContext('2d');
-const radiusField=document.createElement('label');radiusField.className='field';radiusField.innerHTML='낙하 반경<select id="radius"><option value="600">600 m</option><option value="700" selected>700 m</option><option value="800">800 m</option><option value="900">900 m</option><option value="1000">1,000 m</option><option value="1100">1,100 m</option><option value="1200">1,200 m</option><option value="1250">1,250 m</option></select>';$('mode').closest('label').after(radiusField);
-const secretButton=document.createElement('button');secretButton.id='secretToggle';secretButton.className='secret-toggle';secretButton.type='button';secretButton.textContent='비밀의 방';secretButton.setAttribute('aria-pressed','false');canvas.parentElement.append(secretButton);let secretsVisible=false;
-const maps={erangel:{size:8,image:'erangel.png',defaults:[0,1.2,8,6.4,5.8,3.7]},miramar:{size:8,image:'miramar.png',defaults:[0,2.2,8,5.9,5.4,4.1]},taego:{size:8,image:'taego.png',defaults:[0,6.8,8,1.5,5.1,3.8]},rondo:{size:8,image:'rondo.png',defaults:[0,5.8,8,2.1,5.4,3.5]},sanhok:{size:4,image:'sanhok.png',defaults:[0,.6,4,3.2,2.8,1.8]}};
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand"><h1>낙하산 최적화 계산기</h1><p>목표를 찍고 비행기 항로를 그리면 낙하 시점을 계산합니다.</p></div>
+    <nav class="seg maps" id="mapTabs" aria-label="맵 선택"></nav>
+  </header>
+
+  <main class="layout">
+    <section class="map">
+      <canvas id="map" aria-label="PUBG 지도와 낙하 경로"></canvas>
+      <div class="seg float tools" id="toolTabs" role="group" aria-label="지도 조작">
+        <button type="button" data-tool="target" aria-pressed="true">목표 지정</button>
+        <button type="button" data-tool="route" aria-pressed="false">항로 그리기</button>
+      </div>
+      <div class="float hint" id="toolHint"></div>
+      <button type="button" class="float secret" id="secretToggle" aria-pressed="false">비밀의 방 보기</button>
+    </section>
+
+    <aside class="side">
+      <section class="card result" aria-live="polite">
+        <div class="label">낙하 시점</div>
+        <div class="big" id="drop">—</div>
+        <div class="sub" id="dropSub"></div>
+        <div class="stats">
+          <div class="stat"><span>유지 속도</span><strong id="speed">—</strong></div>
+          <div class="stat"><span>수직 하강</span><strong id="vertical">—</strong></div>
+          <div class="stat"><span>낙하점→목표</span><strong id="glide">—</strong></div>
+        </div>
+        <p class="notice" id="notice"></p>
+        <p class="explain" id="explain"></p>
+      </section>
+
+      <section class="card">
+        <h2>계산 방식</h2>
+        <div class="seg full" id="modeTabs" role="group" aria-label="계산 방식">
+          <button type="button" data-mode="fixed" aria-pressed="true">기본 공식</button>
+          <button type="button" data-mode="terrain" aria-pressed="false">고도 보정</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>낙하 반경 · 유지 속도</h2>
+        <div class="radii" id="radii" role="group" aria-label="낙하 반경"></div>
+        <p class="formula" id="formula"></p>
+      </section>
+
+      <details class="card">
+        <summary>좌표 직접 입력 (km)</summary>
+        <div class="coords">
+          <span></span><span class="head">X</span><span class="head">Y</span>
+          <span class="row">시작</span><input id="sx" type="number" step=".1" inputmode="decimal" aria-label="시작 X"><input id="sy" type="number" step=".1" inputmode="decimal" aria-label="시작 Y">
+          <span class="row">종료</span><input id="ex" type="number" step=".1" inputmode="decimal" aria-label="종료 X"><input id="ey" type="number" step=".1" inputmode="decimal" aria-label="종료 Y">
+          <span class="row">목표</span><input id="tx" type="number" step=".1" inputmode="decimal" aria-label="목표 X"><input id="ty" type="number" step=".1" inputmode="decimal" aria-label="목표 Y">
+        </div>
+      </details>
+    </aside>
+  </main>
+
+  <p class="foot">고도 보정은 지도 자료를 보고 수동으로 나눈 상대 지형 등급(실측 고도 아님)을 쓰는 참고용 계산입니다. 비밀의 방 위치도 스크린샷 기반 추정치입니다.</p>
+</div>
+<script>
+const $=id=>document.getElementById(id),canvas=$('map'),ctx=canvas.getContext('2d'),SCALE=2;canvas.width=canvas.height=800*SCALE;
+const maps={
+  erangel:{name:'에란겔',size:8,image:'erangel.png',defaults:[0,1.2,8,6.4,5.3,4.1]},
+  miramar:{name:'미라마',size:8,image:'miramar.png',defaults:[0,2.2,8,5.9,5.4,4.1]},
+  taego:{name:'태이고',size:8,image:'taego.png',defaults:[0,6.8,8,1.5,5.1,3.8]},
+  rondo:{name:'론도',size:8,image:'rondo.png',defaults:[0,5.8,8,2.1,5.4,3.5]},
+  sanhok:{name:'사녹',size:4,image:'sanhok.png',defaults:[0,.6,4,3.2,2.8,1.8]}
+};
+const RADII=[600,700,800,900,1000,1100,1200,1250];
 const secretRooms={
   erangel:[[5.01,7.36],[1.36,6.22],[4.04,6.07],[6.39,5.98],[2.53,5.84],[5.35,4.65],[1.44,4.53],[2.93,4.33],[4.56,3.65],[6.62,3.17],[2.67,2.95],[1.24,2.54],[4.27,2.22],[3.22,1.44],[5.56,1.41]],
   miramar:[[3.18,6.92],[1.76,6.65],[4.53,6.57],[6.18,6.38],[2.70,5.53],[5.02,4.84],[1.36,4.73],[3.79,4.20],[6.10,3.76],[2.64,3.10],[1.28,2.81],[4.28,2.89],[5.16,1.76],[3.27,1.42],[1.38,.87]],
   taego:[[1.28,6.85],[2.38,6.69],[4.62,6.38],[3.39,6.06],[6.68,6.00],[1.10,5.34],[.86,4.67],[6.87,4.70],[5.79,4.18],[4.22,3.10],[.79,2.81],[6.15,2.50],[2.26,1.63],[4.72,1.65],[6.14,.90]],
   rondo:[[2.98,7.09],[5.70,7.14],[1.45,6.68],[4.94,5.99],[3.72,5.39],[6.92,5.33],[1.40,4.82],[6.54,3.82],[4.58,3.67],[1.34,3.29],[2.95,2.95],[5.60,2.03],[1.22,1.61],[3.31,1.12],[4.84,.76]]
 };
-const imgs={};Object.entries(maps).forEach(([id,map])=>{const img=new Image();img.src=map.image;img.onload=draw;imgs[id]=img});
-const terrain={erangel:[['Stalber',3,[[5.8,6.4],[7.3,6.5],[7.8,7.8],[6.5,8],[5.8,7.4]]],['북부 능선',2,[[3.7,6.3],[5.8,6.4],[6.4,7.6],[4.8,7.8],[3.7,7.1]]],['서부 고지대',2,[[.3,3],[2,3.2],[2.5,5.1],[1.8,6.4],[.6,5.6]]],['Pochinki 평야',0,[[2.7,3.2],[5.1,3.2],[5.2,4.5],[3.2,4.7],[2.6,4]]],['Mylta 해안 분지',0,[[5,2],[7.8,2.2],[7.8,3.1],[6,3],[5,2.7]]]],miramar:[['북서 산악지',3,[[0,5.8],[2.4,5.8],[2.8,8],[0,8]]],['Oasis 고지대',2,[[2.7,6.6],[4.2,6.5],[4.1,8],[3,8]]],['북동 능선',3,[[6.1,5.7],[8,5.7],[8,8],[6.9,8]]],['El Azahar 언덕',2,[[5.7,4.5],[7.7,4.5],[7.8,6.2],[6.6,6.3]]],['중앙 사막 평야',0,[[2.4,3.5],[5.2,3.5],[5.2,5],[3,5.1]]],['Los Leones 평야',0,[[3.4,1.7],[6.4,1.7],[6.5,3.6],[4.4,3.8]]]]};
-const lowCorridors={erangel:[{name:'북부 강 통로',points:[[1.7,5.2],[2.7,5.2],[3.8,5.3],[4.8,5.1]]},{name:'중앙 평야 통로',points:[[2.7,4.1],[3.7,4],[4.7,3.9],[5.3,3.5]]},{name:'남부 해안 통로',points:[[4.7,2.4],[5.6,2.4],[6.7,2.5],[7.5,2.7]]}],miramar:[{name:'El Pozo → Pecado',points:[[2,5],[3,4.7],[4.1,4.5],[4.8,4]]},{name:'Pecado → Los Leones',points:[[4.7,4],[4.8,3.3],[5,2.7],[5.1,2.2]]},{name:'남부 해안 통로',points:[[2.1,1.3],[3.5,1.2],[4.8,1.3],[6.1,1.4]]}]};
-Object.assign(terrain,{
+// 상대 지형 등급: 0 저지대, 1 기본(구역 밖), 2 능선, 3 주요 고지대. 에란겔·미라마는 terrain-relative-analysis.json과 같은 구역입니다.
+const terrain={
+  erangel:[['Stalber',3,[[5.8,6.4],[7.3,6.5],[7.8,7.8],[6.5,8],[5.8,7.4]]],['북부 능선',2,[[3.7,6.3],[5.8,6.4],[6.4,7.6],[4.8,7.8],[3.7,7.1]]],['서부 고지대',2,[[.3,3],[2,3.2],[2.5,5.1],[1.8,6.4],[.6,5.6]]],['남서 능선',2,[[.7,1.1],[2.7,1.4],[3,3],[1.8,3.3],[.8,2.5]]],['Mylta 언덕',2,[[5.1,2.8],[7.3,3],[7.4,4.8],[6.3,5.2],[5.3,4.4]]],['Sosnovka 서부 능선',2,[[2.9,.2],[4.5,.2],[4.5,1.7],[3.6,2],[2.8,1.3]]],['Sosnovka 동부 언덕',2,[[5.3,.5],[6.6,.6],[6.8,1.8],[5.7,2.1],[5.1,1.4]]],['Rozhok 강 분지',0,[[2,4.7],[4.9,4.6],[5.2,5.6],[3.9,5.9],[2.5,5.7]]],['Pochinki 평야',0,[[2.7,3.2],[5.1,3.2],[5.2,4.5],[3.2,4.7],[2.6,4]]],['Mylta 해안 분지',0,[[5,2],[7.8,2.2],[7.8,3.1],[6,3],[5,2.7]]]],
+  miramar:[['북서 산악지',3,[[0,5.8],[2.4,5.8],[2.8,8],[0,8]]],['Oasis 고지대',2,[[2.7,6.6],[4.2,6.5],[4.1,8],[3,8]]],['북동 능선',3,[[6.1,5.7],[8,5.7],[8,8],[6.9,8]]],['El Azahar 언덕',2,[[5.7,4.5],[7.7,4.5],[7.8,6.2],[6.6,6.3]]],['Pecado–Cantera 능선',2,[[4.4,3.4],[6.5,3.3],[6.5,4.7],[5.2,4.9]]],['서남 능선',2,[[0,1.3],[2.5,1.4],[2.7,4.9],[1,5.2],[0,4.1]]],['El Pozo 분지',1,[[1.1,4.7],[3.5,4.8],[3.7,6.2],[1.5,6.4]]],['중앙 사막 평야',0,[[2.4,3.5],[5.2,3.5],[5.2,5],[3,5.1]]],['Los Leones 평야',0,[[3.4,1.7],[6.4,1.7],[6.5,3.6],[4.4,3.8]]],['남부 해안',0,[[2,0],[6.5,0],[6.6,1.7],[3.1,1.8]]]],
   taego:[['북서 산악지',3,[[.8,5.8],[3.8,5.9],[4.8,7.8],[2.0,8],[.6,7.1]]],['북부 능선',2,[[3.4,5.8],[5.8,5.9],[6.3,7.8],[4.5,8]]],['동부 해안 언덕',2,[[6.0,3.4],[8,3.6],[8,6.8],[6.7,6.5]]],['남부 구릉',2,[[4.6,.6],[6.8,.8],[6.8,2.8],[5.3,3.2]]],['Ho San 평야',0,[[2.4,2.5],[5.6,2.5],[5.7,4.7],[3.0,4.9]]],['서남 해안 저지대',0,[[.2,.6],[3.1,.5],[3.1,2.8],[.6,3.0]]]],
   rondo:[['북동 고지대',3,[[5.4,5.7],[8,5.6],[8,8],[6.3,8]]],['북부 능선',2,[[2.2,6.2],[5.7,6.0],[6.3,8],[3.0,8]]],['동부 구릉',2,[[6.2,3.0],[8,3.1],[8,5.8],[6.7,5.7]]],['Jao Tin 저지대',0,[[.4,4.1],[3.1,4.1],[3.3,6.0],[.5,6.1]]],['중앙 평야',0,[[2.2,2.6],[5.9,2.7],[6.2,5.3],[3.0,5.5]]],['남부 강 유역',0,[[2.0,.7],[6.5,.8],[6.8,2.8],[3.0,3.0]]]],
   sanhok:[['북부 산악지',3,[[1.7,2.8],[3.8,2.8],[4,4],[2.2,4]]],['동부 능선',2,[[2.5,1.7],[4,1.7],[4,3.0],[3.0,3.0]]],['Camp Alpha 구릉',2,[[.3,1.8],[1.7,1.9],[1.8,3.0],[.4,3.1]]],['Bootcamp 분지',0,[[1.5,1.5],[2.5,1.5],[2.6,2.4],[1.5,2.5]]],['Pai Nan 강 저지대',0,[[1.1,.8],[2.7,.8],[2.8,1.7],[1.2,1.8]]],['남부 해안 저지대',0,[[1.0,.1],[3.2,.1],[3.3,1.0],[1.4,1.1]]]]
-});
-Object.assign(lowCorridors,{
-  taego:[{name:'Ho San 중앙 평야',points:[[2.7,3.6],[3.7,3.8],[4.7,3.9],[5.5,4.2]]},{name:'남부 해안 통로',points:[[1.1,1.7],[2.7,1.5],[4.1,1.6],[5.5,1.8]]}],
-  rondo:[{name:'Jao Tin 중앙 평야',points:[[1.4,5.1],[2.7,4.9],[4.0,4.7],[5.3,4.5]]},{name:'남부 강 유역',points:[[2.0,1.6],[3.4,1.8],[4.7,1.9],[6.1,2.0]]}],
-  sanhok:[{name:'Bootcamp 강 분지',points:[[1.2,2.0],[1.8,2.0],[2.2,1.9],[2.7,1.7]]},{name:'남부 해안 통로',points:[[1.2,.8],[1.8,.7],[2.4,.7],[3.0,.8]]}]
-});
-let draft=null,solution=null;const read=()=>({start:{x:+$('sx').value,y:+$('sy').value},end:{x:+$('ex').value,y:+$('ey').value},target:{x:+$('tx').value,y:+$('ty').value},map:maps[$('mapSelect').value]});const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);const at=(a,b,t)=>({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t});
-function inPolygon(point,polygon){let inside=false;for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){const [xi,yi]=polygon[i],[xj,yj]=polygon[j];if(((yi>point.y)!==(yj>point.y))&&(point.x<(xj-xi)*(point.y-yi)/(yj-yi)+xi))inside=!inside}return inside}
-function terrainLevel(mapId,point){let level=1;(terrain[mapId]||[]).forEach(([,candidate,polygon])=>{if(inPolygon(point,polygon))level=Math.max(level,candidate)});return level}
-function routeProfile(mapId,points){let sum=0,max=0,count=0;for(let i=0;i<points.length-1;i++)for(let n=0;n<=16;n++){const q=at(points[i],points[i+1],n/16),level=terrainLevel(mapId,q);sum+=level;max=Math.max(max,level);count++}return{average:sum/count,max}}
-function pathLength(points){return points.slice(1).reduce((sum,point,index)=>sum+dist(points[index],point),0)}
-function calculateByMode(){const v=read(),route=dist(v.start,v.end);if(!route){$('notice').textContent='항로 시작점과 종료점을 다르게 설정해 주세요.';return}$('notice').textContent='';const rule=v.map.size===4?{d:1.2,s:165,label:'4×4 사녹'}:{d:.7,s:200,label:'8×8 맵'};const dir={x:(v.end.x-v.start.x)/route,y:(v.end.y-v.start.y)/route},desired={x:v.target.x-dir.x*rule.d,y:v.target.y-dir.y*rule.d},progress=Math.max(0,Math.min(1,((desired.x-v.start.x)*dir.x+(desired.y-v.start.y)*dir.y)/route));let exit=at(v.start,v.end,progress),waypoint=null,corridorName='';const useTerrain=$('mode').value==='terrain'&&terrain[$('mapSelect').value];if(useTerrain){const options=[{waypoint:null,name:'직선 경로'}];lowCorridors[$('mapSelect').value].forEach(c=>c.points.forEach(point=>options.push({waypoint:{x:point[0],y:point[1]},name:c.name})));let best=null;options.forEach(option=>{const points=option.waypoint?[exit,option.waypoint,v.target]:[exit,v.target],profile=routeProfile($('mapSelect').value,points),length=pathLength(points),score=length+profile.average*.24+profile.max*.18;if(!best||score<best.score)best={...option,profile,length,score}});if(best.waypoint){const early=Math.min(.55,Math.max(0,best.length-rule.d));exit={x:exit.x-dir.x*early,y:exit.y-dir.y*early};waypoint=best.waypoint;corridorName=best.name}}const points=waypoint?[exit,waypoint,v.target]:[exit,v.target],actual=pathLength(points),profile=useTerrain?routeProfile($('mapSelect').value,points):null;solution={exit,target:v.target,waypoint,actual,rule,profile,corridorName};$('drop').textContent=`${Math.round((rule.d+Math.max(0,actual-rule.d))*1000)} m 전`;$('speed').textContent=`${rule.s} km/h`;$('vertical').textContent='100 m';$('distance').textContent=`${Math.round(actual*1000)} m`;$('explain').textContent=profile?`${rule.label} + 상대 고도 보정: 평균 지형 등급 ${profile.average.toFixed(1)}, 최고 등급 ${profile.max}. ${waypoint?`${corridorName} 저지대 통로를 경유하도록 더 이른 낙하 지점을 추천합니다.`:'직선 경로가 저지대 경유보다 유리해 기본 공식을 유지합니다.'}`:`${rule.label} 기본 고정 공식: 목표 ${rule.d} km 전에 낙하해 ${rule.s} km/h를 유지한 뒤, 고도 100 m에서 수직 하강하세요.`;draw()}
-function calculate(){const v=read(),route=dist(v.start,v.end);if(!route){$('notice').textContent='항로 시작점과 종료점을 다르게 설정해 주세요.';return}$('notice').textContent='';const rule=v.map.size===4?{d:1.2,s:165,label:'4×4 사녹'}:{d:.7,s:200,label:'8×8 맵'};const dir={x:(v.end.x-v.start.x)/route,y:(v.end.y-v.start.y)/route},desired={x:v.target.x-dir.x*rule.d,y:v.target.y-dir.y*rule.d},progress=Math.max(0,Math.min(1,((desired.x-v.start.x)*dir.x+(desired.y-v.start.y)*dir.y)/route));let exit=at(v.start,v.end,progress),waypoint=null,corridorName='';if(terrain[$('mapSelect').value]){const options=[{waypoint:null,name:'직선 경로'}];lowCorridors[$('mapSelect').value].forEach(c=>c.points.forEach(point=>options.push({waypoint:{x:point[0],y:point[1]},name:c.name})));let best=null;options.forEach(option=>{const points=option.waypoint?[exit,option.waypoint,v.target]:[exit,v.target],profile=routeProfile($('mapSelect').value,points),length=pathLength(points),score=length+profile.average*.24+profile.max*.18;if(!best||score<best.score)best={...option,profile,length,score}});if(best.waypoint){const early=Math.min(.55,Math.max(0,best.length-rule.d));exit={x:exit.x-dir.x*early,y:exit.y-dir.y*early};waypoint=best.waypoint;corridorName=best.name}}const points=waypoint?[exit,waypoint,v.target]:[exit,v.target],actual=pathLength(points),profile=terrain[$('mapSelect').value]?routeProfile($('mapSelect').value,points):null;solution={exit,target:v.target,waypoint,actual,rule,profile,corridorName};$('drop').textContent=`${Math.round((rule.d+Math.max(0,actual-rule.d))*1000)} m 전`;$('speed').textContent=`${rule.s} km/h`;$('vertical').textContent='100 m';$('distance').textContent=`${Math.round(actual*1000)} m`;$('explain').textContent=profile?`${rule.label} + 상대 고도 보정: 평균 지형 등급 ${profile.average.toFixed(1)}, 최고 등급 ${profile.max}. ${waypoint?`${corridorName} 저지대 통로를 경유하도록 더 이른 낙하 지점을 추천합니다.`:'직선 경로가 저지대 경유보다 유리해 기본 공식을 유지합니다.'}`:`${rule.label} 고정 공식 적용: 목표 ${rule.d} km 전에 낙하해 ${rule.s} km/h를 유지한 뒤, 고도 100 m에서 수직 하강하세요.`;draw()}
-function draw(){const v=read(),map=v.map,img=imgs[$('mapSelect').value],w=800,h=800,p=q=>({x:q.x/map.size*w,y:h-q.y/map.size*h});ctx.clearRect(0,0,w,h);if(img?.complete)ctx.drawImage(img,0,0,w,h);else{ctx.fillStyle='#102530';ctx.fillRect(0,0,w,h)}if($('terrain').checked&&terrain[$('mapSelect').value]){const cols={0:'#50d18a',2:'#e0c263',3:'#d87849'};terrain[$('mapSelect').value].forEach(([name,level,points])=>{ctx.beginPath();points.forEach((q,i)=>{const a=p({x:q[0],y:q[1]});i?ctx.lineTo(a.x,a.y):ctx.moveTo(a.x,a.y)});ctx.closePath();ctx.fillStyle=cols[level]+'55';ctx.fill();ctx.strokeStyle=cols[level];ctx.lineWidth=2;ctx.stroke()})}const line=(a,b,color,width=4,dash=[])=>{const A=p(a),B=p(b);ctx.save();ctx.setLineDash(dash);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.stroke();ctx.restore()};line(v.start,v.end,'#e8f0fb',3);if(draft)line(draft.start,draft.end,'#e8f0fb',3,[10,7]);if(solution){if(solution.waypoint){line(solution.exit,solution.waypoint,'#ffb44b',5);line(solution.waypoint,solution.target,'#63d7ff',5);mark(solution.waypoint,'#63d7ff','저지대 경유')}else line(solution.exit,solution.target,'#ffb44b',5);mark(solution.exit,'#ffb44b','낙하');mark(solution.target,'#ff7272','목표')}mark(v.start,'#e8f0fb','시작',5);mark(v.end,'#e8f0fb','종료',5)}
-const drawCore=draw;
-draw=function(){drawCore();const v=read(),radius=+$('radius').value/1000,cx=v.target.x/v.map.size*800,cy=800-v.target.y/v.map.size*800,pxRadius=radius/v.map.size*800;ctx.save();ctx.setLineDash([10,8]);ctx.strokeStyle='rgba(99,215,255,.95)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(cx,cy,pxRadius,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#dff8ff';ctx.font='600 13px system-ui';ctx.strokeStyle='rgba(0,0,0,.72)';ctx.lineWidth=3;const label=`선택 반경 ${radius} km`;ctx.strokeText(label,cx+12,cy-pxRadius-10);ctx.fillText(label,cx+12,cy-pxRadius-10);ctx.restore()};
-const drawWithCircle=draw;
-draw=function(){drawWithCircle();if($('mode').value!=='fixed'||!solution)return;const v=read(),radius=+$('radius').value/1000,gap=solution.actual-radius;if(gap<=.001)return;const dx=solution.exit.x-v.target.x,dy=solution.exit.y-v.target.y,length=Math.hypot(dx,dy),edge={x:v.target.x+dx/length*radius,y:v.target.y+dy/length*radius},toCanvas=q=>({x:q.x/v.map.size*800,y:800-q.y/v.map.size*800}),a=toCanvas(solution.exit),b=toCanvas(edge);ctx.save();ctx.setLineDash([7,6]);ctx.strokeStyle='#ff7181';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#ffe2e7';ctx.font='600 13px system-ui';ctx.strokeStyle='rgba(0,0,0,.72)';ctx.lineWidth=3;const label=`반경 밖 +${Math.round(gap*1000)} m`;ctx.strokeText(label,(a.x+b.x)/2+8,(a.y+b.y)/2-8);ctx.fillText(label,(a.x+b.x)/2+8,(a.y+b.y)/2-8);ctx.restore()};
-function mark(q,color,label,r=7){const v=read(),a={x:q.x/v.map.size*800,y:800-q.y/v.map.size*800};ctx.fillStyle=color;ctx.beginPath();ctx.arc(a.x,a.y,r,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.font='600 13px system-ui';ctx.strokeStyle='rgba(0,0,0,.7)';ctx.lineWidth=3;ctx.strokeText(label,a.x+9,a.y-8);ctx.fillText(label,a.x+9,a.y-8)}
-const drawWithSecrets=draw;
-draw=function(){drawWithSecrets();const points=secretRooms[$('mapSelect').value];if(!secretsVisible||!points)return;const size=read().map.size;ctx.save();points.forEach(([x,y])=>{const px=x/size*800,py=800-y/size*800;ctx.fillStyle='#f43f5e';ctx.beginPath();ctx.arc(px,py,8,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fff0f3';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(px,py,2.5,0,Math.PI*2);ctx.fill()});ctx.restore()};
-function circleExit(v,radius){const dx=v.end.x-v.start.x,dy=v.end.y-v.start.y,fx=v.start.x-v.target.x,fy=v.start.y-v.target.y,a=dx*dx+dy*dy,b=2*(fx*dx+fy*dy),c=fx*fx+fy*fy-radius*radius,disc=b*b-4*a*c;if(disc<0)return null;const roots=[(-b-Math.sqrt(disc))/(2*a),(-b+Math.sqrt(disc))/(2*a)].filter(t=>t>=0&&t<=1).sort((a,b)=>a-b);return roots.length?at(v.start,v.end,roots[0]):null}
-const calculateByModeCore=calculateByMode;
-calculateByMode=function(){calculateByModeCore();if(!solution)return;solution.rule.d=+$('radius').value/1000;const v=read();solution.rule.s=v.map.size===8?(solution.rule.d===.6?210:(solution.rule.d===1||solution.rule.d===1.1?165:200)):165;$('speed').textContent=`${solution.rule.s} km/h`;if($('mode').value!=='terrain'){const exactExit=circleExit(v,solution.rule.d);if(exactExit){solution.exit=exactExit;solution.actual=solution.rule.d;$('notice').textContent='선택한 반경 원과 비행기 항로의 첫 교차점을 낙하점으로 표시합니다.';draw()}else $('notice').textContent='비행기 항로가 선택한 반경 원을 지나지 않습니다. 지도상 낙하점은 가장 가까운 항로 지점입니다.';$('drop').textContent=`${Math.round(solution.rule.d*1000)} m 전`;$('distance').textContent=`${Math.round(solution.actual*1000)} m`;return}if(!solution?.profile)return;const route=dist(v.start,v.end),dir={x:(v.end.x-v.start.x)/route,y:(v.end.y-v.start.y)/route};const extra=Math.min(.55,Math.max(0,solution.profile.average-1)*.18+Math.max(0,solution.profile.max-1)*.14);if(extra<.01){$('drop').textContent=`${Math.round(solution.rule.d*1000)} m 전`;$('explain').textContent+=' 현재 경로는 분석된 고지대를 지나지 않아 기본 공식과 같은 결과입니다.';return}solution.exit={x:solution.exit.x-dir.x*extra,y:solution.exit.y-dir.y*extra};solution.actual+=extra;$('drop').textContent=`${Math.round((solution.rule.d+extra)*1000)} m 전`;$('distance').textContent=`${Math.round(solution.actual*1000)} m`;$('explain').textContent+=` 능선 노출 보정으로 ${Math.round(extra*1000)} m 더 이른 낙하를 적용했습니다.`;draw()};
-calculate=calculateByMode;
-function point(e){const r=canvas.getBoundingClientRect(),m=read().map;return{x:(e.clientX-r.left)/r.width*m.size,y:(1-(e.clientY-r.top)/r.height)*m.size}}canvas.addEventListener('click',e=>{if(e.button!==0)return;const q=point(e);$('tx').value=q.x.toFixed(2);$('ty').value=q.y.toFixed(2);calculate()});canvas.addEventListener('contextmenu',e=>e.preventDefault());canvas.addEventListener('pointerdown',e=>{if(e.button!==2)return;e.preventDefault();const q=point(e);draft={start:q,end:q};canvas.setPointerCapture(e.pointerId);draw()});canvas.addEventListener('pointermove',e=>{if(!draft)return;draft.end=point(e);draw()});canvas.addEventListener('pointerup',e=>{if(!draft||e.button!==2)return;draft.end=point(e);$('sx').value=draft.start.x.toFixed(2);$('sy').value=draft.start.y.toFixed(2);$('ex').value=draft.end.x.toFixed(2);$('ey').value=draft.end.y.toFixed(2);draft=null;calculate()});$('mapSelect').addEventListener('change',()=>{const d=maps[$('mapSelect').value].defaults;['sx','sy','ex','ey','tx','ty'].forEach((id,i)=>$(id).value=d[i]);$('terrain').disabled=!terrain[$('mapSelect').value];if($('terrain').disabled)$('terrain').checked=false;$('terrainHint').textContent=terrain[$('mapSelect').value]?'기본 고정 공식은 거리만 사용합니다. 상대 고도 보정은 능선·저지대 자료를 함께 사용합니다.':'이 맵의 상대 고도 레이어 자료는 아직 없습니다.';calculate()});$('mode').addEventListener('change',calculate);$('terrain').addEventListener('change',draw);['sx','sy','ex','ey','tx','ty'].forEach(id=>$(id).addEventListener('change',calculate));window.addEventListener('resize',draw);calculate();
-$('radius').addEventListener('change',calculate);
-$('mapSelect').addEventListener('change',()=>{$('radius').value=maps[$('mapSelect').value].size===4?'1200':'700';calculate()});
-function updateSecretButton(){const available=Boolean(secretRooms[$('mapSelect').value]);secretButton.disabled=!available;if(!available){secretsVisible=false;secretButton.textContent='비밀의 방 없음';secretButton.setAttribute('aria-pressed','false')}else secretButton.textContent=secretsVisible?'비밀의 방 숨기기':'비밀의 방 보기';draw()}
-secretButton.addEventListener('click',()=>{if(secretButton.disabled)return;secretsVisible=!secretsVisible;secretButton.setAttribute('aria-pressed',String(secretsVisible));secretButton.textContent=secretsVisible?'비밀의 방 숨기기':'비밀의 방 보기';draw()});
-$('mapSelect').addEventListener('change',updateSecretButton);updateSecretButton();
-</script></body></html>
+};
+
+const state={map:'erangel',mode:'fixed',radius:700,tool:'target',secrets:false};
+let draft=null,solution=null;
+const imgs={};
+function mapImage(id){if(!imgs[id]){const img=new Image();img.onload=()=>draw();img.src=maps[id].image;imgs[id]=img}return imgs[id]}
+
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const at=(a,b,t)=>({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t});
+const meters=km=>`${Math.round(km*1000).toLocaleString('ko-KR')} m`;
+const speedFor=(size,radius)=>size===8?(radius===.6?210:(radius===1||radius===1.1?165:200)):165;
+
+// 입력값을 읽으면서 0~맵 크기 범위를 벗어나거나 숫자가 아닌 칸을 표시합니다.
+function read(){
+  const size=maps[state.map].size,bad=[];
+  const num=id=>{const el=$(id),raw=el.value.trim(),n=Number(raw),ok=raw!==''&&Number.isFinite(n)&&n>=0&&n<=size;el.setAttribute('aria-invalid',String(!ok));if(!ok)bad.push(id);return n};
+  return{start:{x:num('sx'),y:num('sy')},end:{x:num('ex'),y:num('ey')},target:{x:num('tx'),y:num('ty')},size,bad};
+}
+
+function inPolygon(point,polygon){let inside=false;for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){const[xi,yi]=polygon[i],[xj,yj]=polygon[j];if(((yi>point.y)!==(yj>point.y))&&(point.x<(xj-xi)*(point.y-yi)/(yj-yi)+xi))inside=!inside}return inside}
+// 구역 밖은 등급 1, 구역 안은 겹친 구역 중 가장 높은 등급
+function zonesAt(mapId,point){return(terrain[mapId]||[]).filter(([,,polygon])=>inPolygon(point,polygon))}
+function terrainLevel(mapId,point){const zones=zonesAt(mapId,point);return zones.length?Math.max(...zones.map(z=>z[1])):1}
+function routeProfile(mapId,a,b){
+  let sum=0,max=0;const highs=new Set();
+  for(let n=0;n<=16;n++){const q=at(a,b,n/16),level=terrainLevel(mapId,q);sum+=level;max=Math.max(max,level);zonesAt(mapId,q).forEach(([name,lv])=>{if(lv>=2)highs.add(name)})}
+  return{average:sum/17,max,highs:[...highs]};
+}
+// 항로가 반경 원에 처음 들어가는 지점의 t(0~1). 시작점이 이미 원 안이면 0, 원을 지나지 않으면 null
+function circleEntry(v,radius){const dx=v.end.x-v.start.x,dy=v.end.y-v.start.y,fx=v.start.x-v.target.x,fy=v.start.y-v.target.y,a=dx*dx+dy*dy,b=2*(fx*dx+fy*dy),c=fx*fx+fy*fy-radius*radius;if(c<=0)return 0;const disc=b*b-4*a*c;if(disc<0)return null;const t=(-b-Math.sqrt(disc))/(2*a);return t>=0&&t<=1?t:null}
+function closestT(v){const dx=v.end.x-v.start.x,dy=v.end.y-v.start.y;return Math.max(0,Math.min(1,((v.target.x-v.start.x)*dx+(v.target.y-v.start.y)*dy)/(dx*dx+dy*dy)))}
+
+function setResult({drop='—',off=false,sub='',speed='—',vertical='—',glide='—',notice='',explain=''}){
+  $('drop').textContent=drop;$('drop').classList.toggle('off',off);$('dropSub').textContent=sub;
+  $('speed').textContent=speed;$('vertical').textContent=vertical;$('glide').textContent=glide;
+  $('notice').textContent=notice;$('explain').textContent=explain;
+}
+function clearResults(notice){solution=null;setResult({notice,explain:'항로와 목표를 지정해 주세요.'});draw()}
+
+function calculate(){
+  const v=read();
+  if(v.bad.length)return clearResults(`좌표를 확인해 주세요. 0~${v.size} km 범위의 숫자만 입력할 수 있습니다.`);
+  const route=dist(v.start,v.end);
+  if(route<.01)return clearResults('항로 시작점과 종료점을 다르게 설정해 주세요.');
+  const radius=state.radius/1000,speed=speedFor(v.size,radius),entry=circleEntry(v,radius),reachable=entry!==null,startInside=reachable&&dist(v.start,v.target)<=radius;
+  let t=reachable?entry:closestT(v),profile=null,shift=0,clamped=false;
+  if(state.mode==='terrain'){
+    profile=routeProfile(state.map,at(v.start,v.end,t),v.target);
+    // 능선·고지대를 지나면 낙하를 최대 550 m 앞당기되, 항로 시작점보다 앞으로는 가지 않습니다.
+    const want=reachable?Math.min(.55,Math.max(0,profile.average-1)*.18+Math.max(0,profile.max-1)*.14):0,next=Math.max(0,t-want/route);
+    clamped=want>0&&t-want/route<0;shift=(t-next)*route;t=next;
+  }
+  const exit=at(v.start,v.end,t),glide=dist(exit,v.target);
+  solution={exit,target:v.target,reachable};
+  const sub=`${maps[state.map].name} · ${state.mode==='terrain'?'고도 보정':'기본 공식'} · 반경 ${meters(radius)}`;
+  let explain=`낙하 후 ${speed} km/h를 유지하며 목표로 날아가고, 고도 100 m에서 수직 하강하세요.`;
+  if(profile){
+    const crossing=profile.highs.length?` (${profile.highs.join(', ')} 통과)`:'';
+    const effect=!reachable?'':shift>=.01?` 능선 노출을 줄이려고 ${meters(shift)} 일찍 낙하합니다.`:' 경로에 능선·고지대가 없어 기본 공식과 같습니다.';
+    explain=`경로 평균 지형 등급 ${profile.average.toFixed(1)}, 최고 ${profile.max}${crossing}.${effect} ${explain}`;
+  }
+  setResult({
+    drop:!reachable?'범위 밖':t===0?'즉시':`${meters(glide)} 전`,off:!reachable,sub,
+    speed:`${speed} km/h`,vertical:'100 m',glide:meters(glide),
+    notice:!reachable?`항로가 반경 원에 닿지 않습니다(${meters(glide-radius)} 부족). 목표에 가장 가까운 항로 지점을 낙하점으로 표시합니다.`:startInside?'항로 시작점이 이미 반경 안이라 바로 낙하합니다.':clamped?'보정한 낙하점이 항로 시작점보다 앞이라 시작 지점에서 바로 낙하합니다.':'',
+    explain
+  });
+  draw();
+}
+
+function caption(text,x,y,color='#fff',align='left'){ctx.save();ctx.font='650 13px "Pretendard Variable",system-ui,sans-serif';ctx.textAlign=align;ctx.lineJoin='round';ctx.strokeStyle='rgba(0,0,0,.8)';ctx.lineWidth=4;ctx.strokeText(text,x,y);ctx.fillStyle=color;ctx.fillText(text,x,y);ctx.restore()}
+function draw(){
+  const v=read(),size=v.size,img=mapImage(state.map),p=q=>({x:q.x/size*800,y:800-q.y/size*800}),ok=!v.bad.length;
+  ctx.setTransform(SCALE,0,0,SCALE,0,0);ctx.clearRect(0,0,800,800);
+  if(img.complete&&img.naturalWidth)ctx.drawImage(img,0,0,800,800);else{ctx.fillStyle='#0e1311';ctx.fillRect(0,0,800,800)}
+  // 1 km 격자
+  ctx.save();ctx.strokeStyle='rgba(255,255,255,.2)';ctx.lineWidth=1;ctx.fillStyle='rgba(255,255,255,.75)';ctx.font='600 11px "Pretendard Variable",system-ui,sans-serif';
+  for(let km=1;km<size;km++){const pos=km/size*800;ctx.beginPath();ctx.moveTo(pos,0);ctx.lineTo(pos,800);ctx.moveTo(0,pos);ctx.lineTo(800,pos);ctx.stroke();ctx.fillText(`${km}`,pos+4,14);ctx.fillText(`${km}`,4,800-pos-4)}
+  ctx.restore();
+  const line=(a,b,color,width,dash=[])=>{const A=p(a),B=p(b);ctx.save();ctx.setLineDash(dash);ctx.lineCap='round';ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.stroke();ctx.restore()};
+  const arrow=(a,b,color)=>{const A=p(a),B=p(b),ang=Math.atan2(B.y-A.y,B.x-A.x);ctx.save();ctx.translate(B.x,B.y);ctx.rotate(ang);ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(4,0);ctx.lineTo(-10,-6.5);ctx.lineTo(-10,6.5);ctx.closePath();ctx.fill();ctx.restore()};
+  const dot=(q,fill,r,ring='rgba(0,0,0,.6)')=>{const a=p(q);ctx.save();ctx.fillStyle=fill;ctx.strokeStyle=ring;ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(a.x,a.y,r,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.restore();return a};
+  if(ok){
+    const radius=state.radius/1000,c=p(v.target),pr=radius/size*800;
+    ctx.save();ctx.fillStyle='rgba(95,212,255,.08)';ctx.strokeStyle='rgba(95,212,255,.9)';ctx.lineWidth=2;ctx.setLineDash([8,6]);ctx.beginPath();ctx.arc(c.x,c.y,pr,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.restore();
+    caption(`반경 ${meters(radius)}`,c.x,c.y-pr-8,'#bdefff','center');
+    if(dist(v.start,v.end)>=.01){line(v.start,v.end,'rgba(0,0,0,.45)',6);line(v.start,v.end,'#eef1ea',2.5);arrow(v.start,v.end,'#eef1ea')}
+    if(solution){
+      if(!solution.reachable){const dx=solution.exit.x-v.target.x,dy=solution.exit.y-v.target.y,len=Math.hypot(dx,dy),edge={x:v.target.x+dx/len*radius,y:v.target.y+dy/len*radius};line(solution.exit,edge,'#ff6a5f',2.5,[6,5])}
+      line(solution.exit,solution.target,'rgba(0,0,0,.45)',8);line(solution.exit,solution.target,'#f5b02e',4.5);
+      const e=dot(solution.exit,'#f5b02e',7,'#1b1304');caption('낙하',e.x+11,e.y-9,'#ffd27a');
+    }
+    const s=dot(v.start,'#eef1ea',4.5);caption('시작',s.x+9,s.y-8);
+    const t=dot(v.target,'#ff5a4f',8,'#fff');caption('목표',t.x+12,t.y+4);
+  }
+  if(draft&&dist(draft.start,draft.end)>.01){line(draft.start,draft.end,'#eef1ea',2.5,[9,7]);arrow(draft.start,draft.end,'#eef1ea')}
+  const rooms=secretRooms[state.map];
+  if(state.secrets&&rooms)rooms.forEach(([x,y])=>{dot({x,y},'#f43f5e',7,'#fff0f3');const a=p({x,y});ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(a.x,a.y,2.2,0,Math.PI*2);ctx.fill()});
+}
+
+// ---- UI ----
+function renderControls(){
+  const size=maps[state.map].size;
+  document.querySelectorAll('#mapTabs button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.map===state.map)));
+  document.querySelectorAll('#modeTabs button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===state.mode)));
+  document.querySelectorAll('#toolTabs button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tool===state.tool)));
+  document.querySelectorAll('#radii button').forEach(b=>{const r=+b.dataset.radius;b.setAttribute('aria-pressed',String(r===state.radius));b.querySelector('small').textContent=`${speedFor(size,r/1000)} km/h`});
+  $('formula').textContent=`${maps[state.map].name} ${size}×${size} km 기본값은 ${size===4?'1,200 m / 165':'700 m / 200'} km/h입니다. 반경 원과 항로가 처음 만나는 지점에서 낙하해 속도를 유지하고, 100 m에서 수직 하강합니다.`;
+  $('toolHint').textContent=state.tool==='route'?'지도를 드래그해서 비행기 항로를 그리세요':matchMedia('(pointer:coarse)').matches?'탭해서 목표 지정':'클릭: 목표 지정 · 우클릭 드래그: 항로';
+  canvas.classList.toggle('drawing',state.tool==='route');
+  const available=Boolean(secretRooms[state.map]);if(!available)state.secrets=false;
+  const sb=$('secretToggle');sb.disabled=!available;sb.setAttribute('aria-pressed',String(state.secrets));sb.textContent=!available?'비밀의 방 없음':state.secrets?'비밀의 방 숨기기':'비밀의 방 보기';
+}
+function selectMap(id){state.map=id;state.radius=maps[id].size===4?1200:700;['sx','sy','ex','ey','tx','ty'].forEach((key,i)=>$(key).value=maps[id].defaults[i]);renderControls();calculate()}
+
+$('mapTabs').innerHTML=Object.entries(maps).map(([id,m])=>`<button type="button" data-map="${id}">${m.name}</button>`).join('');
+$('radii').innerHTML=RADII.map(r=>`<button type="button" data-radius="${r}">${r.toLocaleString('ko-KR')}<small></small></button>`).join('');
+$('mapTabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b&&b.dataset.map!==state.map)selectMap(b.dataset.map)});
+$('modeTabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.mode=b.dataset.mode;renderControls();calculate()});
+$('toolTabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.tool=b.dataset.tool;renderControls()});
+$('radii').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.radius=+b.dataset.radius;renderControls();calculate()});
+$('secretToggle').addEventListener('click',()=>{if(!secretRooms[state.map])return;state.secrets=!state.secrets;renderControls();draw()});
+['sx','sy','ex','ey','tx','ty'].forEach(id=>$(id).addEventListener('change',calculate));
+
+function point(e){const r=canvas.getBoundingClientRect(),size=maps[state.map].size,clamp=n=>Math.min(size,Math.max(0,n));return{x:clamp((e.clientX-r.left)/r.width*size),y:clamp((1-(e.clientY-r.top)/r.height)*size)}}
+const fmt=n=>String(+n.toFixed(2));
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('click',e=>{if(e.button!==0||state.tool!=='target')return;const q=point(e);$('tx').value=fmt(q.x);$('ty').value=fmt(q.y);calculate()});
+canvas.addEventListener('pointerdown',e=>{if(!(e.button===2||(e.button===0&&state.tool==='route')))return;e.preventDefault();const q=point(e);draft={start:q,end:q};canvas.setPointerCapture(e.pointerId);draw()});
+canvas.addEventListener('pointermove',e=>{if(!draft)return;draft.end=point(e);draw()});
+const finishDraft=e=>{if(!draft)return;draft.end=point(e);const d=draft;draft=null;if(dist(d.start,d.end)<.05)return draw();$('sx').value=fmt(d.start.x);$('sy').value=fmt(d.start.y);$('ex').value=fmt(d.end.x);$('ey').value=fmt(d.end.y);calculate()};
+canvas.addEventListener('pointerup',finishDraft);
+canvas.addEventListener('pointercancel',()=>{draft=null;draw()});
+
+selectMap('erangel');
+</script>
+</body>
+</html>
